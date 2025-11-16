@@ -101,19 +101,13 @@ func (u *checkinUsecase) RegistrationGuest(
 			return ne
 		}
 
-		if err := u.roomRepo.UpdateVisibility(ctx, room.GetID().String(), false, tx); err != nil {
-			ne := goerror.ComposeClientError(infraerror.ErrInternalServerError, err)
-			ne.SetServerMessage(err.Error())
-			return ne
-		}
-
-		if err := u.roomRepo.UpdateVisibility(ctx, room.GetID().String(), false, tx); err != nil {
-			ne := goerror.ComposeClientError(infraerror.ErrInternalServerError, err)
-			ne.SetServerMessage(err.Error())
-			return ne
-		}
-
 		if err := u.userRoleRepo.Upsert(ctx, userRolePayload, tx); err != nil {
+			ne := goerror.ComposeClientError(infraerror.ErrInternalServerError, err)
+			ne.SetServerMessage(err.Error())
+			return ne
+		}
+
+		if err := u.roomRepo.UpdateVisibility(ctx, room.GetID().String(), false, tx); err != nil {
 			ne := goerror.ComposeClientError(infraerror.ErrInternalServerError, err)
 			ne.SetServerMessage(err.Error())
 			return ne
