@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/Heian28/go-utils/fiber/goresponse"
 	dtorequest "github.com/Voldemort-Project/sga-service/src/app/dto/request"
+	dtoresponse "github.com/Voldemort-Project/sga-service/src/app/dto/response"
 	"github.com/Voldemort-Project/sga-service/src/app/usecases"
 	"github.com/Voldemort-Project/sga-service/utils"
 	"github.com/gofiber/fiber/v3"
@@ -53,12 +54,13 @@ func (h *checkinHandler) CheckinGuest(c fiber.Ctx) error {
 	if err != nil {
 		panic(err)
 	}
+	response := dtoresponse.TransformListCheckinGuestResponseDto(rows)
 	meta := h.resClient.CreateMeta(pagination.Page, pagination.PerPage, int(total))
 	return h.resClient.Jsonify(
 		c,
 		fiber.StatusOK,
 		"Fetch checkin guest list successfully",
-		rows,
+		response,
 		meta,
 	)
 }
