@@ -11,6 +11,7 @@ import (
 	"github.com/Voldemort-Project/sga-service/src/domain/entities"
 	"github.com/Voldemort-Project/sga-service/src/domain/repositories"
 	infraerror "github.com/Voldemort-Project/sga-service/src/infra/error"
+	"github.com/Voldemort-Project/sga-service/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -20,6 +21,10 @@ type CheckinUsecaseImpl interface {
 		ctx context.Context,
 		dto *dtorequest.CheckinRegistrationRequestDto,
 	) error
+	GetCheckinGuestList(
+		ctx context.Context,
+		pagination *utils.PaginationDto,
+	) ([]entities.CheckinEntity, int64, error)
 }
 
 type checkinUsecase struct {
@@ -118,4 +123,17 @@ func (u *checkinUsecase) RegistrationGuest(
 		return err
 	}
 	return nil
+}
+
+func (u *checkinUsecase) GetCheckinGuestList(
+	ctx context.Context,
+	pagination *utils.PaginationDto,
+) ([]entities.CheckinEntity, int64, error) {
+	rows, total, err := u.checkinRepo.GetCheckinGuestList(ctx, pagination)
+	if err != nil {
+		ne := goerror.ComposeClientError(infraerror.ErrInternalServerError, err)
+		ne.SetServerMessage(err.Error())
+		return nil, 0, ne
+	}
+	return rows, total, nil
 }

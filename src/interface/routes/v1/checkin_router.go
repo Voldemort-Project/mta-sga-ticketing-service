@@ -6,6 +6,7 @@ import (
 )
 
 func CheckinRouter(app fiber.Router, hndl handlers.CheckinHandlerImpl) {
-	rtr := app.Group("/checkins")
-	rtr.Post("/registration", hndl.GuestRegistration)
+	r := app.Group("/checkins")
+	r.Post("/registration", hndl.GuestRegistration)
+	r.Get("/guest", hndl.CheckinGuest)
 }

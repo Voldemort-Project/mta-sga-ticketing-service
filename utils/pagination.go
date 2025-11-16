@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
 const (
@@ -57,6 +58,14 @@ type PaginationDto struct {
 	PerPage int
 	Keyword string
 	Order   []PaginationOrder
+}
+
+func (p *PaginationDto) WithScope() func(tx *gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		limit := p.PerPage
+		offset := (p.Page - 1) * limit
+		return tx.Limit(limit).Offset(offset)
+	}
 }
 
 func NewPagination(c fiber.Ctx) *PaginationDto {
