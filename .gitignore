@@ -1,0 +1,5 @@
+bin/
+logs/
+tmp/
+configs/config.yaml
+CLAUDE.md

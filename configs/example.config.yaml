@@ -1,0 +1,19 @@
+app:
+    name: "SGA Service"
+    env: development
+    port: 8080
+postgres:
+    url: postgresql://neondb_owner:npg_HwyMj23DzfnN@ep-green-mouse-a1tbyx2b-pooler.ap-southeast-1.aws.neon.tech/dbsgaservice?sslmode=require&channel_binding=require
+    host: "ep-green-mouse-a1tbyx2b-pooler.ap-southeast-1.aws.neon.tech"
+    port: "5432"
+    user: "neondb_owner"
+    password: "npg_HwyMj23DzfnN"
+    database: "dbsgaservice"
+    sslmode: "require"
+    maximumIdleConnection: 5
+    maximumOpenConnection: 100
+    connectionMaxLifeTime: 10m
+    slowSqlThreshold: 1s
+    enableQueryLogging: true
+    retries: 5
+    retryInterval: 1s
