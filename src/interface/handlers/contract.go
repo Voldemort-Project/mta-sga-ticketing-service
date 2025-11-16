@@ -11,7 +11,7 @@ type AppHandler struct {
 
 func NewAppHandler(resClient goresponse.GoResponseClient, usecaseApp usecases.AppUsecase) AppHandler {
 	return AppHandler{
-		CheckinHandler: NewGuestHandler(
+		CheckinHandler: NewCheckinHandler(
 			resClient,
 			usecaseApp.CheckinUsecase,
 		),

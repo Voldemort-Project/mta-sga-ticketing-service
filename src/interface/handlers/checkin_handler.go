@@ -3,12 +3,15 @@ package handlers
 import (
 	"github.com/Heian28/go-utils/fiber/goresponse"
 	dtorequest "github.com/Voldemort-Project/sga-service/src/app/dto/request"
+	dtoresponse "github.com/Voldemort-Project/sga-service/src/app/dto/response"
 	"github.com/Voldemort-Project/sga-service/src/app/usecases"
+	"github.com/Voldemort-Project/sga-service/utils"
 	"github.com/gofiber/fiber/v3"
 )
 
 type CheckinHandlerImpl interface {
 	GuestRegistration(c fiber.Ctx) error
+	CheckinGuest(c fiber.Ctx) error
 }
 
 type checkinHandler struct {
@@ -16,7 +19,7 @@ type checkinHandler struct {
 	ucGuest   usecases.CheckinUsecaseImpl
 }
 
-func NewGuestHandler(
+func NewCheckinHandler(
 	resClient goresponse.GoResponseClient,
 	ucGuest usecases.CheckinUsecaseImpl,
 ) CheckinHandlerImpl {
@@ -41,5 +44,23 @@ func (h *checkinHandler) GuestRegistration(c fiber.Ctx) error {
 		"Checkin registration successful",
 		nil,
 		nil,
+	)
+}
+
+func (h *checkinHandler) CheckinGuest(c fiber.Ctx) error {
+	ctx := c.Context()
+	pagination := utils.NewPagination(c)
+	rows, total, err := h.ucGuest.GetCheckinGuestList(ctx, pagination)
+	if err != nil {
+		panic(err)
+	}
+	response := dtoresponse.TransformListCheckinGuestResponseDto(rows)
+	meta := h.resClient.CreateMeta(pagination.Page, pagination.PerPage, int(total))
+	return h.resClient.Jsonify(
+		c,
+		fiber.StatusOK,
+		"Fetch checkin guest list successfully",
+		response,
+		meta,
 	)
 }

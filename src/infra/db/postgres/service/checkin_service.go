@@ -2,11 +2,14 @@ package pgservice
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"sync"
 
 	"github.com/Voldemort-Project/sga-service/src/domain/entities"
 	"github.com/Voldemort-Project/sga-service/src/domain/repositories"
 	pgmodels "github.com/Voldemort-Project/sga-service/src/infra/db/postgres/models"
+	"github.com/Voldemort-Project/sga-service/utils"
 	"gorm.io/gorm"
 )
 
@@ -56,4 +59,80 @@ func (s *checkinService) Detail(ctx context.Context, id string, tx *gorm.DB) (an
 	}
 
 	return model.ToEntity(), nil
+}
+
+func (s *checkinService) GetCheckinGuestList(
+	ctx context.Context,
+	pagination *utils.PaginationDto,
+) ([]entities.CheckinEntity, int64, error) {
+	var (
+		rows        = make([]entities.CheckinEntity, 0)
+		sqlRows     = make([]pgmodels.CheckinModel, 0)
+		errChannels = make(chan error, 2)
+
+		total int64
+		err   error
+		wg    sync.WaitGroup
+		mutex sync.Mutex
+	)
+
+	tx := s.db.WithContext(ctx).Session(&gorm.Session{QueryFields: true, PrepareStmt: true})
+	tx = tx.Preload("User").Preload("Room").Preload("Organization")
+
+	if pagination.Keyword != "" {
+		tx = tx.Where("guest_name ILIKE @keyword OR guest_email ILIKE @keyword OR guest_phone ILIKE @keyword OR guest_id_card ILIKE @keyword", sql.Named("keyword", "%"+pagination.Keyword+"%"))
+	}
+
+	execSelect := func(t *gorm.DB, wg *sync.WaitGroup, mu *sync.Mutex) {
+		defer wg.Done()
+
+		mu.Lock()
+		defer mu.Unlock()
+
+		if err := t.Find(&sqlRows).Error; err != nil {
+			errChannels <- err
+		}
+	}
+
+	execCount := func(t *gorm.DB, wg *sync.WaitGroup, mu *sync.Mutex) {
+		defer wg.Done()
+
+		mu.Lock()
+		defer mu.Unlock()
+
+		if err := t.Model(&pgmodels.CheckinModel{}).Count(&total).Error; err != nil {
+			errChannels <- err
+		}
+	}
+
+	wg.Add(2)
+	go execSelect(tx, &wg, &mutex)
+	go execCount(tx, &wg, &mutex)
+
+	go func() {
+		wg.Wait()
+
+		close(errChannels)
+
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		for errs := range errChannels {
+			err = errs
+			total = 0
+			break
+		}
+	}()
+
+	wg.Wait()
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	for _, row := range sqlRows {
+		rows = append(rows, *row.ToEntity())
+	}
+
+	return rows, total, nil
 }
